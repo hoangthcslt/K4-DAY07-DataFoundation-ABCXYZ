@@ -1,37 +1,16 @@
-from .agent import KnowledgeBaseAgent
-from .chunking import (
-    ChunkingStrategyComparator,
-    FixedSizeChunker,
-    RecursiveChunker,
-    SentenceChunker,
-    compute_similarity,
-)
-from .embeddings import (
-    EMBEDDING_PROVIDER_ENV,
-    LOCAL_EMBEDDING_MODEL,
-    OPENAI_EMBEDDING_MODEL,
-    LocalEmbedder,
-    MockEmbedder,
-    OpenAIEmbedder,
-    _mock_embed,
-)
-from .models import Document
-from .store import EmbeddingStore
+import importlib
+import sys
 
-__all__ = [
-    "Document",
-    "FixedSizeChunker",
-    "SentenceChunker",
-    "RecursiveChunker",
-    "ChunkingStrategyComparator",
-    "compute_similarity",
-    "EmbeddingStore",
-    "KnowledgeBaseAgent",
-    "MockEmbedder",
-    "LocalEmbedder",
-    "OpenAIEmbedder",
-    "_mock_embed",
-    "LOCAL_EMBEDDING_MODEL",
-    "OPENAI_EMBEDDING_MODEL",
-    "EMBEDDING_PROVIDER_ENV",
-]
+_PACKAGE = "src.2A202601064-TranTienDung"
+_m = importlib.import_module(_PACKAGE)
+
+# Export all attributes from the student package to top-level src
+for attr in dir(_m):
+    if not attr.startswith("__"):
+        globals()[attr] = getattr(_m, attr)
+
+# Also register src.<submodule> (e.g. src.chunking) so that direct submodule
+# imports elsewhere in the repo (ingest.py, main.py) keep working even though
+# the real files only live under the student package above.
+for _name in ("agent", "chunking", "embeddings", "models", "store"):
+    sys.modules[f"src.{_name}"] = importlib.import_module(f"{_PACKAGE}.{_name}")
