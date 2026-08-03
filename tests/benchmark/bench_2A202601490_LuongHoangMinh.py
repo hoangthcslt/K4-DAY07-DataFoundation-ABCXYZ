@@ -1,43 +1,27 @@
-"""Personal benchmark for Tran Tien Dung (2A202601064)."""
-
 import sys
-from importlib import import_module
-from pathlib import Path
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Set module path to load the student's personal package
+os.environ["LAB_SOLUTION_PACKAGE"] = "src.2A202601490_LuongHoangMinh"
 
-from ingest import load_documents, chunk_document
+from ingest import build_knowledge_base
+from src.chunking import RecursiveChunker
+from src.embeddings import _mock_embed
+from src.agent import KnowledgeBaseAgent
 from main import demo_llm
-
-# Import directly from my own package (not the shared top-level `src`, which
-# points at whichever teammate's implementation the group currently agreed
-# on) so this benchmark always exercises my own chunker/store/agent code.
-PACKAGE_NAME = "src.2A202601064-TranTienDung"
-solution = import_module(PACKAGE_NAME)
-EmbeddingStore = solution.EmbeddingStore
-KnowledgeBaseAgent = solution.KnowledgeBaseAgent
-MarkdownHeaderChunker = solution.MarkdownHeaderChunker
-_mock_embed = solution._mock_embed
 
 def run_benchmark():
     print("=== CHẠY BENCHMARK CÁ NHÂN ===")
-
+    
     # 1. Chọn chunker của riêng bạn
-    chunker = MarkdownHeaderChunker(chunk_size=400)
-    print(f"Chiến lược (Strategy): MarkdownHeaderChunker(chunk_size=400)\n")
+    chunker = RecursiveChunker(chunk_size=400)
+    print(f"Chiến lược (Strategy): RecursiveChunker(chunk_size=400)\n")
 
-    # 2. Nạp cả thư mục corpus (dùng parser/chunk_document dùng chung của ingest.py,
-    # nhưng lưu vào EmbeddingStore của chính mình)
-    chunk_docs = []
-    for doc in load_documents("data/k4_ecommerce"):
-        chunk_docs.extend(chunk_document(doc, chunker))
-
-    store = EmbeddingStore(collection_name="2A202601064_benchmark", embedding_fn=_mock_embed)
-    store.add_documents(chunk_docs)
+    # 2. Nạp cả thư mục corpus
+    store = build_knowledge_base("data/k4_ecommerce", _mock_embed, chunker=chunker)
     print(f"Số chunk đã nạp vào Store: {store.get_collection_size()}\n")
-
+    
     # Khởi tạo Agent
     agent = KnowledgeBaseAgent(store, llm_fn=demo_llm)
 

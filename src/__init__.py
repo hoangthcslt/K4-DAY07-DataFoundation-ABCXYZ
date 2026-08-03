@@ -1,7 +1,7 @@
 import importlib
 import sys
 
-_PACKAGE = "src.2A202601064-TranTienDung"
+_PACKAGE = "src.2A202601436_NguyenDinhHoang"
 _m = importlib.import_module(_PACKAGE)
 
 # Export all attributes from the student package to top-level src
